@@ -22,7 +22,6 @@ import joblib
 # STEP 1 - LOAD DATA
 # ============================================
 
-# Read the CSV file - make sure heart.csv is in same folder
 df = pd.read_csv('heart.csv')
 
 print("=== RAW DATA ===")
@@ -37,30 +36,26 @@ print("Shape:", df.shape)
 df = df.drop(['id', 'dataset'], axis=1)
 
 # Convert target to 0 and 1
-# 0 = No Heart Disease
-# 1 = Has Heart Disease
 df['num'] = df['num'].apply(lambda x: 1 if x > 0 else 0)
 
 # Remove rows with missing values
 df = df.dropna()
 
-# Convert text columns like male/female to numbers
-# Computers cannot understand text so we convert to 0 and 1
+# Convert text columns to numbers using dummy encoding
 df = pd.get_dummies(df, drop_first=True)
 
-# X = input data (age, cholesterol, etc.)
-# y = answer we want to predict (0 or 1)
+# X = input features, y = target
 X = df.drop('num', axis=1)
 y = df['num']
 
-# Scaling makes all numbers same range
-# So age and cholesterol are treated fairly
+# Scale the features
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
 print("\n=== AFTER CLEANING ===")
 print("Total patients:", X_scaled.shape[0])
 print("Total features:", X_scaled.shape[1])
+print("Feature names:", list(X.columns))
 print("With heart disease:", y.sum())
 print("Without heart disease:", (y==0).sum())
 print("[DONE] Data Cleaned!")
@@ -69,8 +64,6 @@ print("[DONE] Data Cleaned!")
 # STEP 3 - SPLIT DATA
 # ============================================
 
-# 80% used for training the model
-# 20% used for testing how good the model is
 X_train, X_test, y_train, y_test = train_test_split(
     X_scaled, y, test_size=0.2, random_state=42
 )
@@ -85,21 +78,18 @@ print("Testing samples:", X_test.shape[0])
 print("\n=== TRAINING MODELS ===")
 
 # Model 1 - Logistic Regression
-# Simple model good for yes/no predictions
 lr = LogisticRegression()
 lr.fit(X_train, y_train)
 lr_acc = accuracy_score(y_test, lr.predict(X_test))
 print(f"Logistic Regression Accuracy: {lr_acc * 100:.2f}%")
 
 # Model 2 - Random Forest
-# Many decision trees working together for better accuracy
 rf = RandomForestClassifier(n_estimators=100, random_state=42)
 rf.fit(X_train, y_train)
 rf_acc = accuracy_score(y_test, rf.predict(X_test))
 print(f"Random Forest Accuracy: {rf_acc * 100:.2f}%")
 
 # Model 3 - KNN
-# Finds similar patients and predicts based on them
 accuracies_knn = []
 k_values = range(1, 20)
 
@@ -173,7 +163,7 @@ plt.show()
 print("Chart 5 saved!")
 
 # ============================================
-# STEP 6 - FINAL SUMMARY
+# STEP 6 - SAVE MODEL + FEATURES
 # ============================================
 
 print("\n=== FINAL RESULTS ===")
@@ -181,8 +171,12 @@ print(f"Logistic Regression : {lr_acc * 100:.2f}%")
 print(f"Random Forest       : {rf_acc * 100:.2f}%")
 print(f"KNN (K={best_k})         : {knn_acc * 100:.2f}%")
 
-# Save the best model for UI use
+# Save model, scaler, and feature column names
 joblib.dump(rf, 'heart_model.pkl')
 joblib.dump(scaler, 'scaler.pkl')
-print("\n[DONE] Model saved as heart_model.pkl")
+joblib.dump(list(X.columns), 'feature_columns.pkl')  # IMPORTANT - app.py ke liye
+
+print("\n[DONE] heart_model.pkl saved!")
+print("[DONE] scaler.pkl saved!")
+print("[DONE] feature_columns.pkl saved!")
 print("[DONE] Project Complete! Ready for UI!")
