@@ -1,7 +1,5 @@
-# ============================================
-# HEART DISEASE DETECTOR - Complete ML Code
-# AI Project - DUET
-# ============================================
+# HEART DISEASE DETECTOR
+# AI Project
 
 import sys
 import io
